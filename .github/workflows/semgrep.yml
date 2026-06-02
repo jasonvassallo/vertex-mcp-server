@@ -1,9 +1,12 @@
 name: Semgrep
 
-# Semgrep Community Edition scan using public rulesets — no SEMGREP_APP_TOKEN,
-# no Semgrep Cloud account, no data leaves the GitHub Actions runner. Rules are
-# pulled from the open Semgrep Registry (p/* packs). Diff-aware on PRs (scans
-# only changed files), full scan on pushes to the default branch.
+# Token-connected Semgrep scan via GitHub Actions. Uses SEMGREP_APP_TOKEN
+# (stored as a repo secret, sourced from macOS Keychain) so the scan runs your
+# full configured rulesets and reports findings to your Semgrep dashboard from
+# CI. This is the single source of Semgrep truth for this repo — there is no
+# separate dashboard-managed Project (fully migrated to CI).
+#
+# Diff-aware on PRs (scans only changed files), full scan on default-branch push.
 
 on:
   pull_request: {}
@@ -20,11 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: semgrep/semgrep
-    # Skip dependabot PRs (they can't access Actions context cleanly).
+    # Skip dependabot PRs (they can't access secrets / Actions context cleanly).
     if: (github.actor != 'dependabot[bot]')
     steps:
       - uses: actions/checkout@v4
       - run: semgrep ci
         env:
-          # Public rulesets: general best-practice, secrets, and Go security.
-          SEMGREP_RULES: "p/default p/secrets p/golang"
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
