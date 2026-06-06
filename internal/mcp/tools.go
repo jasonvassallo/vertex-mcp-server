@@ -234,9 +234,10 @@ Provide your response in JSON format with this structure:
 		}, nil
 	}
 
-	// Try to parse as JSON, but return raw text if parsing fails
-	var reviewData interface{}
-	if err := json.Unmarshal([]byte(response), &reviewData); err != nil {
+	// Validate the response is JSON; we return the raw text either way, so use
+	// json.Valid rather than unmarshaling into interface{} (whose result was
+	// unused and which the unsafe-deserialization linter flags).
+	if !json.Valid([]byte(response)) {
 		// Return as plain text if not valid JSON
 		return &CallToolResult{
 			Content: []interface{}{
